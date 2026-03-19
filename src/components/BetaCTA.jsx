@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
-import { ArrowRight, CheckCircle2, Lock } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Lock, Loader2 } from 'lucide-react'
+import { sendBetaSignupEmail } from '../utils/emailService'
 
 export default function BetaCTA() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const trimmed = email.trim()
     if (!trimmed) {
@@ -18,7 +20,15 @@ export default function BetaCTA() {
       return
     }
     setError('')
-    setSubmitted(true)
+    setLoading(true)
+    try {
+      await sendBetaSignupEmail(trimmed, 'Beta CTA Section')
+      setSubmitted(true)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -92,9 +102,12 @@ export default function BetaCTA() {
                   aria-required="true"
                   aria-describedby={error ? 'beta-email-error' : undefined}
                 />
-                <button type="submit" className="btn-beta-submit">
-                  Get Beta Access
-                  <ArrowRight size={17} aria-hidden="true" />
+                <button type="submit" className="btn-beta-submit" disabled={loading}>
+                  {loading ? (
+                    <>Sending… <Loader2 size={17} className="spin" aria-hidden="true" /></>
+                  ) : (
+                    <>Get Beta Access <ArrowRight size={17} aria-hidden="true" /></>
+                  )}
                 </button>
               </div>
               {error && (

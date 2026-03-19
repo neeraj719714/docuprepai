@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, createContext, useContext, useCallback } from 'react'
-import { X, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { X, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react'
+import { sendBetaSignupEmail } from '../utils/emailService'
 
 const BetaModalContext = createContext()
 
@@ -24,6 +25,7 @@ function BetaModal() {
   const { open, closeModal } = useBetaModal()
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const overlayRef = useRef(null)
   const inputRef = useRef(null)
@@ -96,7 +98,7 @@ function BetaModal() {
     if (e.target === overlayRef.current) closeModal()
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const trimmed = email.trim()
     if (!trimmed) {
@@ -108,7 +110,15 @@ function BetaModal() {
       return
     }
     setError('')
-    setSubmitted(true)
+    setLoading(true)
+    try {
+      await sendBetaSignupEmail(trimmed, 'Beta Modal')
+      setSubmitted(true)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!open) return null
@@ -168,9 +178,12 @@ function BetaModal() {
                   {error}
                 </p>
               )}
-              <button type="submit" className="btn-primary beta-modal-submit">
-                Get Beta Access
-                <ArrowRight size={17} aria-hidden="true" />
+              <button type="submit" className="btn-primary beta-modal-submit" disabled={loading}>
+                {loading ? (
+                  <>Sending… <Loader2 size={17} className="spin" aria-hidden="true" /></>
+                ) : (
+                  <>Get Beta Access <ArrowRight size={17} aria-hidden="true" /></>
+                )}
               </button>
             </form>
             <p className="beta-modal-privacy">
